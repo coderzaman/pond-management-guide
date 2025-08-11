@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>পুকুর ব্যবস্থাপনা সহায়িকা</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Calm Harmony (Slate, Stone, Teal, Amber) -->
+    <!-- Application Structure Plan: A task-oriented, five-section single-page application (SPA) design. The structure guides the user from crisis to resolution: 1) Emergency Diagnosis & First Aid, 2) Interactive Calculator (with dual modes for emergency and preparation), 3) Application Guide, 4) Fish Feed Management (with new feed calculator), and 5) Long-term Prevention. This tabbed structure prioritizes user tasks, allowing quick access to relevant information. -->
+    <!-- Visualization & Content Choices: 
+        1. Report Info: Comparing safety of different lime types. Goal: Guide user to the safest choice. Viz/Method: Bar Chart (Chart.js). Interaction: None. Justification: A visual chart is more impactful than a table for comparing risk vs. safety. Confirms NO SVG.
+        2. Report Info: Dosage calculation for lime/salt. Goal: Provide precise, customized amounts. Viz/Method: Interactive number input + dynamic text output with a mode toggle. Interaction: User inputs pond size and selects mode (emergency/preparation), JS recalculates and updates displayed values. Justification: Empowers the user with a versatile tool for different scenarios.
+        3. Report Info: Fish feed calculation. Goal: Provide precise feed amount. Viz/Method: New interactive calculator in the feed section. Interaction: User inputs avg. fish weight and total count, JS calculates total biomass and daily feed requirement. Justification: Adds significant practical value by automating a crucial daily calculation for the user.
+        4. Report Info: Long-term management topics. Goal: Organize diverse information. Viz/Method: Accordion (HTML/Tailwind/JS). Interaction: Click to expand/collapse. Justification: Prevents information overload. Confirms NO SVG/Mermaid.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Hind Siliguri', sans-serif;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+        .tab-active {
+            border-color: #0d9488;
+            background-color: #ccfbf1;
+            color: #134e4a;
+            font-weight: 600;
+        }
+        .tab-inactive {
+            border-color: transparent;
+            background-color: #f1f5f9;
+            color: #475569;
+        }
+        .calc-mode-btn.mode-active {
+            background-color: #0d9488;
+            color: white;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
+        .calc-mode-btn {
+            background-color: #e2e8f0;
+            color: #475569;
+        }
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+
+    <div class="container mx-auto p-4 sm:p-6 lg:p-8 max-w-6xl">
+        <header class="text-center mb-8">
+            <h1 class="text-3xl md:text-4xl font-bold text-teal-800">পুকুর ব্যবস্থাপনা সহায়িকা</h1>
+            <p class="mt-2 text-slate-600">মাছের মড়ক রোধ ও পানির গুণগত মান উন্নয়নে একটি ইন্টারেক্টিভ গাইড</p>
+        </header>
+
+        <nav class="flex flex-wrap justify-center gap-2 sm:gap-4 mb-8">
+            <button data-tab="emergency" class="tab-button text-sm sm:text-base px-3 py-2 rounded-lg border-b-4 transition-all duration-300">🚨 জরুরি অবস্থা</button>
+            <button data-tab="calculator" class="tab-button text-sm sm:text-base px-3 py-2 rounded-lg border-b-4 transition-all duration-300">🧪 ক্যালকুলেটর</button>
+            <button data-tab="application" class="tab-button text-sm sm:text-base px-3 py-2 rounded-lg border-b-4 transition-all duration-300">📋 প্রয়োগ পদ্ধতি</button>
+            <button data-tab="feed" class="tab-button text-sm sm:text-base px-3 py-2 rounded-lg border-b-4 transition-all duration-300">🐟 মাছের খাদ্য</button>
+            <button data-tab="management" class="tab-button text-sm sm:text-base px-3 py-2 rounded-lg border-b-4 transition-all duration-300">🌱 দীর্ঘমেয়াদী ব্যবস্থাপনা</button>
+        </nav>
+
+        <main>
+            <!-- Section 1: Emergency -->
+            <section id="emergency" class="content-section bg-white p-6 rounded-xl shadow-lg">
+                <h2 class="text-2xl font-bold text-red-700 mb-4 border-b-2 border-red-200 pb-2">অধ্যায় ১: জরুরি অবস্থা বিশ্লেষণ ও তাৎক্ষণিক করণীয়</h2>
+                <p class="mb-6 text-slate-600">আপনার পুকুরে রাতে মাছ মারা যাওয়ার প্রধান কারণ অক্সিজেনের অভাব এবং বিষাক্ত গ্যাস। চুন বা লবণ দেওয়ার আগে মাছকে বাঁচানোই প্রথম কাজ। নিচের চেকলিস্টটি মিলিয়ে দেখুন এবং তাৎক্ষণিক পদক্ষেপ গ্রহণ করুন।</p>
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div class="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-lg">
+                        <h3 class="text-xl font-semibold text-amber-800 mb-3">পুকুরের স্বাস্থ্য পরীক্ষা (বিস্তারিত চেকলিস্ট)</h3>
+                        <ul class="space-y-2 text-slate-700">
+                            <li class="flex items-start"><span class="mr-2 mt-1 text-amber-600">➡️</span>মাছ কি ভোরের দিকে ঝাঁক বেঁধে পানির উপরে খাবি খাচ্ছে?</li>
+                            <li class="flex items-start"><span class="mr-2 mt-1 text-amber-600">➡️</span>পানির রঙ কি গাঢ় সবুজ বা সরের মতো স্তরযুক্ত?</li>
+                            <li class="flex items-start"><span class="mr-2 mt-1 text-amber-600">➡️</span>পানি থেকে কি পচা ডিমের মতো গন্ধ আসছে?</li>
+                            <li class="flex items-start"><span class="mr-2 mt-1 text-amber-600">➡️</span>মাছ কি অলসভাবে সাঁতার কাটছে বা খাবার খাচ্ছে না?</li>
+                            <li class="flex items-start"><span class="mr-2 mt-1 text-amber-600">➡️</span>মৃত মাছের মুখ কি অস্বাভাবিকভাবে খোলা?</li>
+                        </ul>
+                    </div>
+                    <div class="bg-emerald-50 border-l-4 border-emerald-500 p-4 rounded-r-lg">
+                        <h3 class="text-xl font-semibold text-emerald-800 mb-3">প্রাথমিক চিকিৎসা: অক্সিজেন বাড়ান</h3>
+                        <ul class="space-y-2 text-slate-700">
+                            <li class="flex items-start"><span class="mr-2 mt-1 text-emerald-600">✅</span>পাম্প দিয়ে পানি তুলে উঁচু থেকে ফেলে ঢেউ সৃষ্টি করুন।</li>
+                            <li class="flex items-start"><span class="mr-2 mt-1 text-emerald-600">✅</span>পুকুরে সাঁতার কেটে বা বাঁশ দিয়ে পিটিয়ে পানি আন্দোলিত করুন।</li>
+                            <li class="flex items-start"><span class="mr-2 mt-1 text-emerald-600">✅</span>সম্ভব হলে জরুরি অক্সিজেন ট্যাবলেট বা পাউডার প্রয়োগ করুন।</li>
+                            <li class="flex items-start"><span class="mr-2 mt-1 text-emerald-600">✅</span>অবিলম্বে বাইরে থেকে বিশুদ্ধ পানি প্রবেশের ব্যবস্থা করুন।</li>
+                            <li class="flex items-start"><span class="mr-2 mt-1 text-emerald-600">✅</span>মাছের মৃত্যু বন্ধ না হওয়া পর্যন্ত খাবার দেওয়া সম্পূর্ণ বন্ধ রাখুন।</li>
+                        </ul>
+                    </div>
+                </div>
+                 <div class="mt-6 p-4 bg-red-50 text-red-800 border border-red-200 rounded-lg">
+                    <p><strong class="font-semibold">বিশেষ সতর্কতা:</strong> পুকুরে অক্সিজেনের অভাব থাকা অবস্থায় সরাসরি চুন (বিশেষ করে কলিচুন) প্রয়োগ করলে পরিস্থিতি আরও খারাপ হতে পারে। প্রথমে অক্সিজেন সরবরাহ নিশ্চিত করে মাছকে স্থিতিশীল করুন, তারপর অন্য ব্যবস্থা নিন।</p>
+                </div>
+            </section>
+
+            <!-- Section 2: Calculator -->
+            <section id="calculator" class="content-section hidden bg-white p-6 rounded-xl shadow-lg">
+                <h2 class="text-2xl font-bold text-teal-800 mb-2 border-b-2 border-teal-200 pb-2">অধ্যায় ২: চুন ও লবণ ক্যালকুলেটর</h2>
+                <div class="flex flex-col md:flex-row items-center justify-center gap-4 my-6 bg-slate-100 p-4 rounded-lg">
+                    <label for="pondSize" class="text-lg font-medium text-slate-700">আপনার পুকুরের আয়তন (শতাংশ):</label>
+                    <input type="number" id="pondSize" value="66" min="1" class="w-24 p-2 text-center text-lg font-bold border-2 border-teal-300 rounded-md focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition">
+                </div>
+                <div class="flex justify-center mb-6 rounded-lg p-1 bg-slate-200 w-fit mx-auto">
+                    <button id="calcModeEmergency" class="calc-mode-btn mode-active px-4 py-2 text-base font-semibold rounded-md transition-all duration-300">জরুরি অবস্থা (মাছ সহ)</button>
+                    <button id="calcModePreparation" class="calc-mode-btn px-4 py-2 text-base font-semibold rounded-md transition-all duration-300">পুকুর প্রস্তুতি (খালি)</button>
+                </div>
+
+                <div id="emergencyResults">
+                    <p class="text-center text-slate-600 mb-4">মাছ থাকা অবস্থায় নিরাপদ প্রয়োগের জন্য পরিমাণ।</p>
+                    <div class="grid md:grid-cols-2 gap-6 mb-8">
+                        <div class="bg-sky-50 p-4 rounded-lg border border-sky-200">
+                            <h3 class="text-xl font-semibold text-sky-800 mb-3">চুনের পরিমাণ</h3>
+                            <div class="space-y-2">
+                                <p class="text-base">✅ <strong class="font-semibold">ডলোচুন (সুপারিশকৃত):</strong> <span id="dolomiteAmount" class="font-bold text-xl text-sky-700"></span> কেজি</p>
+                                <p class="text-base">✅ <strong class="font-semibold">পাথুরে চুন (বিকল্প):</strong> <span id="limestoneAmount" class="font-bold text-xl text-sky-700"></span> কেজি</p>
+                            </div>
+                        </div>
+                        <div class="bg-green-50 p-4 rounded-lg border border-green-200">
+                            <h3 class="text-xl font-semibold text-green-800 mb-3">লবণের পরিমাণ</h3>
+                            <div class="space-y-2">
+                                <p class="text-base">✅ <strong class="font-semibold">আয়োডিনবিহীন লবণ:</strong> <span id="saltAmountEmergency" class="font-bold text-xl text-green-700"></span> কেজি</p>
+                            </div>
+                        </div>
+                    </div>
+                    <h3 class="text-xl font-semibold text-teal-800 mb-4 text-center">চুনের নিরাপত্তা ও ঝুঁকি (মাছ থাকা অবস্থায়)</h3>
+                    <div class="chart-container">
+                        <canvas id="limeSafetyChart"></canvas>
+                    </div>
+                </div>
+
+                <div id="preparationResults" class="hidden">
+                    <p class="text-center text-slate-600 mb-4">খালি পুকুর জীবাণুমুক্ত করতে ও মাটি শোধনের জন্য পরিমাণ।</p>
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div class="bg-indigo-50 p-4 rounded-lg border border-indigo-200">
+                            <h3 class="text-xl font-semibold text-indigo-800 mb-3">চুনের পরিমাণ</h3>
+                            <div class="space-y-2">
+                                <p class="text-base">✅ <strong class="font-semibold">কলিচুন/পোড়াচুন (সুপারিশকৃত):</strong> <span id="slakedLimeAmount" class="font-bold text-xl text-indigo-700"></span> কেজি</p>
+                                <p class="text-base">✅ <strong class="font-semibold">ডলোচুন (বিকল্প):</strong> <span id="dolomiteAmountPrep" class="font-bold text-xl text-indigo-700"></span> কেজি</p>
+                            </div>
+                        </div>
+                        <div class="bg-orange-50 p-4 rounded-lg border border-orange-200">
+                            <h3 class="text-xl font-semibold text-orange-800 mb-3">অন্যান্য</h3>
+                             <div class="space-y-2">
+                                <p class="text-base">✅ <strong class="font-semibold">লবণ:</strong> <span id="saltAmountPrep" class="font-bold text-xl text-orange-700"></span> কেজি</p>
+                                <p class="text-base">✅ <strong class="font-semibold">টিএসপি সার:</strong> <span id="tspAmount" class="font-bold text-xl text-orange-700"></span> কেজি</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Section 3: Application -->
+            <section id="application" class="content-section hidden bg-white p-6 rounded-xl shadow-lg">
+                 <h2 class="text-2xl font-bold text-teal-800 mb-4 border-b-2 border-teal-200 pb-2">অধ্যায় ৩: চুন ও লবণ প্রয়োগের সঠিক পদ্ধতি</h2>
+                <div class="space-y-6">
+                    <div class="flex items-start gap-4 p-4 bg-slate-100 rounded-lg">
+                        <div class="flex-shrink-0 bg-teal-500 text-white rounded-full h-10 w-10 flex items-center justify-center text-xl font-bold">১</div>
+                        <div>
+                            <h3 class="font-semibold text-lg text-slate-800">প্রস্তুতি</h3>
+                            <p class="text-slate-600">চুন কখনোই শুকনো অবস্থায় ছিটাবেন না। বড় পাত্রে নিয়ে পরিমাণ মতো পানি দিয়ে গুলে পাতলা দ্রবণ তৈরি করুন।</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-4 p-4 bg-slate-100 rounded-lg">
+                        <div class="flex-shrink-0 bg-teal-500 text-white rounded-full h-10 w-10 flex items-center justify-center text-xl font-bold">২</div>
+                        <div>
+                            <h3 class="font-semibold text-lg text-slate-800">প্রয়োগ</h3>
+                            <p class="text-slate-600">রোদ ঝলমলে দিনে নৌকা বা পাড় দিয়ে হেঁটে দ্রবণটি সারা পুকুরে সমানভাবে ছিটিয়ে দিন।</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-4 p-4 bg-slate-100 rounded-lg">
+                        <div class="flex-shrink-0 bg-teal-500 text-white rounded-full h-10 w-10 flex items-center justify-center text-xl font-bold">৩</div>
+                        <div>
+                            <h3 class="font-semibold text-lg text-slate-800">অপেক্ষা</h3>
+                            <p class="text-slate-600">চুন প্রয়োগের পর কমপক্ষে ২ থেকে ৩ দিন অপেক্ষা করে তারপর লবণ প্রয়োগ করুন।</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Section 4: Feed -->
+            <section id="feed" class="content-section hidden bg-white p-6 rounded-xl shadow-lg">
+                <h2 class="text-2xl font-bold text-teal-800 mb-4 border-b-2 border-teal-200 pb-2">অধ্যায় ৪: মাছের খাদ্য ব্যবস্থাপনা</h2>
+                
+                <!-- Feed Calculator -->
+                <div class="bg-slate-100 p-6 rounded-lg mb-8">
+                    <h3 class="text-xl font-semibold text-teal-800 mb-4 text-center">দৈনিক খাদ্য ক্যালকুলেটর</h3>
+                    <div class="grid md:grid-cols-2 gap-4 items-center">
+                        <div>
+                            <label for="avgWeight" class="block text-sm font-medium text-slate-700 mb-1">মাছের গড় ওজন (গ্রাম)</label>
+                            <input type="number" id="avgWeight" value="50" class="w-full p-2 border border-slate-300 rounded-md">
+                        </div>
+                        <div>
+                            <label for="fishCount" class="block text-sm font-medium text-slate-700 mb-1">পুকুরে মোট মাছের সংখ্যা</label>
+                            <input type="number" id="fishCount" value="5000" class="w-full p-2 border border-slate-300 rounded-md">
+                        </div>
+                    </div>
+                    <div class="mt-4 text-center">
+                        <p class="text-lg">মোট মাছের ওজন: <strong id="totalBiomass" class="text-teal-700 text-xl"></strong> কেজি</p>
+                        <p class="text-lg">দৈনিক প্রয়োজনীয় খাবার: <strong id="dailyFeed" class="text-amber-600 text-xl"></strong> কেজি</p>
+                    </div>
+                </div>
+
+
+                <p class="mb-6 text-slate-600">মাছের দ্রুত বৃদ্ধি এবং সুস্বাস্থ্যের জন্য সঠিক খাদ্য ব্যবস্থাপনা অপরিহার্য। মাছের খাদ্য প্রধানত দুই প্রকার: প্রাকৃতিক খাদ্য ও সম্পূরক খাদ্য।</p>
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div class="bg-lime-50 p-4 rounded-lg border border-lime-200">
+                        <h3 class="text-xl font-semibold text-lime-800 mb-3">প্রাকৃতিক খাদ্য</h3>
+                        <p class="text-slate-700">পুকুরে প্রাকৃতিকভাবে জন্মানো উদ্ভিদকণা (ফাইটোপ্ল্যাঙ্কটন) ও প্রাণীকণা (জুপ্ল্যাঙ্কটন) মাছের জন্য উৎকৃষ্ট মানের খাবার। পানির রঙ হালকা সবুজ থাকা মানে প্রাকৃতিক খাদ্য আছে।</p>
+                    </div>
+                    <div class="bg-cyan-50 p-4 rounded-lg border border-cyan-200">
+                        <h3 class="text-xl font-semibold text-cyan-800 mb-3">সম্পূরক খাদ্য</h3>
+                        <p class="text-slate-700">চালের কুঁড়া, গমের ভুষি, খৈল ইত্যাদি দিয়ে বানানো বা বাণিজ্যিকভাবে তৈরি প্যাকেটজাত খাবারকে সম্পূরক খাদ্য বলে।</p>
+                    </div>
+                </div>
+                <div class="mt-8">
+                    <h3 class="text-xl font-semibold text-teal-800 mb-4 text-center">দৈনিক খাদ্য প্রয়োগের হার (সম্পূরক)</h3>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full bg-white border border-gray-200 text-center">
+                            <thead class="bg-slate-100">
+                                <tr>
+                                    <th class="py-2 px-4 border-b">মাছের গড় ওজন</th>
+                                    <th class="py-2 px-4 border-b">দৈনিক খাদ্য (মাছের মোট ওজনের %)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr><td class="py-2 px-4 border-b">১ - ৫ গ্রাম</td><td class="py-2 px-4 border-b">১০ - ৮ %</td></tr>
+                                <tr><td class="py-2 px-4 border-b">৬ - ২০ গ্রাম</td><td class="py-2 px-4 border-b">৮ - ৬ %</td></tr>
+                                <tr><td class="py-2 px-4 border-b">২১ - ৫০ গ্রাম</td><td class="py-2 px-4 border-b">৬ - ৪ %</td></tr>
+                                <tr><td class="py-2 px-4 border-b">৫১ - ১০০ গ্রাম</td><td class="py-2 px-4 border-b">৪ - ৩ %</td></tr>
+                                <tr><td class="py-2 px-4 border-b">১০০ গ্রামের ঊর্ধ্বে</td><td class="py-2 px-4 border-b">৩ - ২ %</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Section 5: Management -->
+            <section id="management" class="content-section hidden bg-white p-6 rounded-xl shadow-lg">
+                <h2 class="text-2xl font-bold text-teal-800 mb-4 border-b-2 border-teal-200 pb-2">অধ্যায় ৫: দীর্ঘমেয়াদী টেকসই ব্যবস্থাপনা</h2>
+                <div class="space-y-3" id="accordion-container">
+                    <div class="accordion-item border border-gray-200 rounded-lg">
+                        <button class="accordion-header w-full text-left p-4 bg-slate-100 hover:bg-slate-200 transition rounded-t-lg flex justify-between items-center">
+                            <span class="font-semibold text-lg text-slate-700">১. প্রোবায়োটিকের ব্যবহার</span>
+                            <span class="accordion-icon text-teal-600 font-bold text-xl">+</span>
+                        </button>
+                        <div class="accordion-content"><div class="p-4 border-t border-gray-200"><p class="text-slate-600">প্রোবায়োটিক বা উপকারী ব্যাকটেরিয়া পুকুরের তলার বিষাক্ত কাদা ও গ্যাস দূর করে পানির গুণগত মান ঠিক রাখে। মাসে এক বা দুইবার নিয়মিত প্রোবায়োটিক ব্যবহার করুন।</p></div></div>
+                    </div>
+                    <div class="accordion-item border border-gray-200 rounded-lg">
+                        <button class="accordion-header w-full text-left p-4 bg-slate-100 hover:bg-slate-200 transition flex justify-between items-center">
+                            <span class="font-semibold text-lg text-slate-700">২. কাদা (Sludge) ব্যবস্থাপনা</span>
+                            <span class="accordion-icon text-teal-600 font-bold text-xl">+</span>
+                        </button>
+                        <div class="accordion-content"><div class="p-4 border-t border-gray-200"><ul class="list-disc list-inside space-y-2 text-slate-600"><li>প্রয়োজনের অতিরিক্ত খাবার দেবেন না।</li><li>মাসে অন্তত একবার হররা টেনে বিষাক্ত গ্যাস বের করে দিন।</li></ul></div></div>
+                    </div>
+                    <div class="accordion-item border border-gray-200 rounded-lg">
+                        <button class="accordion-header w-full text-left p-4 bg-slate-100 hover:bg-slate-200 transition flex justify-between items-center">
+                            <span class="font-semibold text-lg text-slate-700">৩. নিয়মিত পানি পরীক্ষা</span>
+                            <span class="accordion-icon text-teal-600 font-bold text-xl">+</span>
+                        </button>
+                        <div class="accordion-content"><div class="p-4 border-t border-gray-200"><p class="text-slate-600 mb-2">সাধারণ টেস্টিং কিট দিয়ে নিয়মিত পিএইচ (pH), দ্রবীভূত অক্সিজেন (DO), এবং অ্যামোনিয়া পরীক্ষা করুন।</p></div></div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const pondSizeInput = document.getElementById('pondSize');
+            const tabs = document.querySelectorAll('.tab-button');
+            const contentSections = document.querySelectorAll('.content-section');
+            const accordionHeaders = document.querySelectorAll('.accordion-header');
+            
+            // Calculator elements
+            const calcModeEmergencyBtn = document.getElementById('calcModeEmergency');
+            const calcModePreparationBtn = document.getElementById('calcModePreparation');
+            const emergencyResultsEl = document.getElementById('emergencyResults');
+            const preparationResultsEl = document.getElementById('preparationResults');
+            
+            // Emergency result spans
+            const dolomiteAmountEl = document.getElementById('dolomiteAmount');
+            const limestoneAmountEl = document.getElementById('limestoneAmount');
+            const saltAmountEmergencyEl = document.getElementById('saltAmountEmergency');
+
+            // Preparation result spans
+            const slakedLimeAmountEl = document.getElementById('slakedLimeAmount');
+            const dolomiteAmountPrepEl = document.getElementById('dolomiteAmountPrep');
+            const saltAmountPrepEl = document.getElementById('saltAmountPrep');
+            const tspAmountEl = document.getElementById('tspAmount');
+
+            // Feed Calculator elements
+            const avgWeightInput = document.getElementById('avgWeight');
+            const fishCountInput = document.getElementById('fishCount');
+            const totalBiomassEl = document.getElementById('totalBiomass');
+            const dailyFeedEl = document.getElementById('dailyFeed');
+
+            let currentCalcMode = 'emergency';
+
+            const emergencyDosages = {
+                dolomite: 0.75, // kg per decimal
+                limestone: 0.75, // kg per decimal
+                salt: 1.5 // kg per decimal
+            };
+
+            const preparationDosages = {
+                slakedLime: 1.5, // kg per decimal for disinfection
+                dolomite: 2.0, // kg per decimal
+                salt: 1.5, // kg per decimal
+                tsp: 0.150 // kg per decimal for natural food growth
+            };
+
+            function calculateAndDisplay() {
+                const size = parseFloat(pondSizeInput.value) || 0;
+                
+                if (currentCalcMode === 'emergency') {
+                    dolomiteAmountEl.textContent = (size * emergencyDosages.dolomite).toFixed(1);
+                    limestoneAmountEl.textContent = (size * emergencyDosages.limestone).toFixed(1);
+                    saltAmountEmergencyEl.textContent = (size * emergencyDosages.salt).toFixed(1);
+                } else {
+                    slakedLimeAmountEl.textContent = (size * preparationDosages.slakedLime).toFixed(1);
+                    dolomiteAmountPrepEl.textContent = (size * preparationDosages.dolomite).toFixed(1);
+                    saltAmountPrepEl.textContent = (size * preparationDosages.salt).toFixed(1);
+                    tspAmountEl.textContent = (size * preparationDosages.tsp).toFixed(1);
+                }
+            }
+            
+            function calculateFeed() {
+                const avgWeight = parseFloat(avgWeightInput.value) || 0;
+                const fishCount = parseInt(fishCountInput.value) || 0;
+
+                const totalBiomass = (avgWeight * fishCount) / 1000; // in kg
+                
+                let feedRate = 0;
+                if (avgWeight <= 5) feedRate = 0.09; // 9%
+                else if (avgWeight <= 20) feedRate = 0.07; // 7%
+                else if (avgWeight <= 50) feedRate = 0.05; // 5%
+                else if (avgWeight <= 100) feedRate = 0.04; // 4%
+                else feedRate = 0.03; // 3%
+
+                const dailyFeed = totalBiomass * feedRate;
+
+                totalBiomassEl.textContent = totalBiomass.toFixed(2);
+                dailyFeedEl.textContent = dailyFeed.toFixed(2);
+            }
+
+            function renderLimeChart() {
+                const chartElement = document.getElementById('limeSafetyChart');
+                if (!chartElement) return;
+                const ctx = chartElement.getContext('2d');
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['ডলোচুন', 'পাথুরে চুন', 'কলিচুন'],
+                        datasets: [
+                            { label: 'নিরাপত্তা', data: [9, 8, 2], backgroundColor: 'rgba(56, 189, 248, 0.6)' },
+                            { label: 'ঝুঁকি', data: [1, 2, 9], backgroundColor: 'rgba(239, 68, 68, 0.6)' }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: { y: { beginAtZero: true, max: 10, title: { display: true, text: 'আপেক্ষিক মান (১-১০ স্কেলে)' } } }
+                    }
+                });
+            }
+
+            function switchTab(tabId) {
+                contentSections.forEach(section => section.classList.add('hidden'));
+                tabs.forEach(tab => {
+                    if (tab.dataset.tab === tabId) {
+                        tab.classList.remove('tab-inactive');
+                        tab.classList.add('tab-active');
+                    } else {
+                        tab.classList.remove('tab-active');
+                        tab.classList.add('tab-inactive');
+                    }
+                });
+                document.getElementById(tabId).classList.remove('hidden');
+            }
+            
+            function switchCalcMode(mode) {
+                currentCalcMode = mode;
+                if (mode === 'emergency') {
+                    calcModeEmergencyBtn.classList.add('mode-active');
+                    calcModePreparationBtn.classList.remove('mode-active');
+                    emergencyResultsEl.classList.remove('hidden');
+                    preparationResultsEl.classList.add('hidden');
+                } else {
+                    calcModePreparationBtn.classList.add('mode-active');
+                    calcModeEmergencyBtn.classList.remove('mode-active');
+                    preparationResultsEl.classList.remove('hidden');
+                    emergencyResultsEl.classList.add('hidden');
+                }
+                calculateAndDisplay();
+            }
+
+            pondSizeInput.addEventListener('input', calculateAndDisplay);
+            
+            avgWeightInput.addEventListener('input', calculateFeed);
+            fishCountInput.addEventListener('input', calculateFeed);
+
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => switchTab(tab.dataset.tab));
+            });
+
+            accordionHeaders.forEach(header => {
+                header.addEventListener('click', () => {
+                    const content = header.nextElementSibling;
+                    const icon = header.querySelector('.accordion-icon');
+                    const isExpanded = content.style.maxHeight;
+                    
+                    accordionHeaders.forEach(h => {
+                        if (h !== header) {
+                           h.nextElementSibling.style.maxHeight = null;
+                           h.querySelector('.accordion-icon').textContent = '+';
+                        }
+                    });
+
+                    if (isExpanded) {
+                        content.style.maxHeight = null;
+                        icon.textContent = '+';
+                    } else {
+                        content.style.maxHeight = content.scrollHeight + "px";
+                        icon.textContent = '-';
+                    }
+                });
+            });
+
+            calcModeEmergencyBtn.addEventListener('click', () => switchCalcMode('emergency'));
+            calcModePreparationBtn.addEventListener('click', () => switchCalcMode('preparation'));
+
+            // Initial setup
+            calculateAndDisplay();
+            calculateFeed();
+            renderLimeChart();
+            switchTab('emergency');
+        });
+    </script>
+</body>
+</html>
