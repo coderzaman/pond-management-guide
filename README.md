@@ -16,6 +16,7 @@
 
 ## হোস্টিং
 এই ওয়েবসাইটটি GitHub Pages এর মাধ্যমে হোস্ট করা হয়েছে।
+Link: https://coderzaman.github.io/pond-management-guide/
 
 ## নির্মাতা
 [Akatruzzaman](https://github.com/coderzaman/)
